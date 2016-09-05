@@ -10,7 +10,7 @@
 6.时间显示 Time to show
 
 使用：Use:
-![image](https://github.com/xjlove/XJAVPlayer/屏幕快照 2016-09-05 下午5.08.17.png)
+![image](https://github.com/xjlove/XJAVPlayer/blob/master/屏幕快照%202016-09-05%20下午5.08.17.png)
 
 .
 .
