@@ -3,6 +3,7 @@
   This player is, according to encapsulated by the AVPlayer has the following features:
 
 1.一句代码就能调用播放  A code can call
+</br>
 2.支持开始/暂停  Support the start/pause
 3.支持放大/缩小  Support/contracts
 4.支持随屏幕旋转 Support with the screen rotation
