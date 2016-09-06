@@ -1,4 +1,15 @@
 # XJAVPlayer
+ 
+ 添加完善功能：
+ 
+ 1.左边上下滑调节音量
+ 
+ 2.右边上下滑调节亮度
+ 
+ 3.左右滑调节播放进度
+ 
+ 4.播放屏幕保持常亮
+
   本播放器是根据AVPlayer进行封装的，具有以下功能：
 
 1.一句代码就能调用播放
@@ -18,9 +29,17 @@
 .
 .
 .
-一天后上传手势调节音量，敬请期待；
 
-
+  Add the perfect function:
+  
+  1. On the left down the volume
+  
+  2. On the right down to adjust brightness 
+  
+  3. About adjusting broadcast schedule
+  
+  4. Keep normally on display screen
+  
   This player is, according to encapsulated by the AVPlayer has the following features:
   </br>
   1. A code can call
@@ -33,4 +52,4 @@
   Use:
 
   ![image](https://github.com/xjlove/XJAVPlayer/blob/master/屏幕快照%202016-09-05%20下午5.08.17.png)
-  A day after the upload gestures to adjust the volume, please look;
+
