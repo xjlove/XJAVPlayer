@@ -22,9 +22,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
     DirectionNone
 };
 
-
 @interface XJAVPlayer ()<XJGestureButtonDelegate>{
     UITapGestureRecognizer *xjTapGesture;//单击收起/弹出菜单
+    UITapGestureRecognizer *xjTwoTapGesture;//双击开始/暂停
     BOOL isHiden;//底部菜单是否收起
     BOOL isPlay;//是否播放
     BOOL isFull;//是否全屏
@@ -50,9 +50,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
 
 @property (strong, nonatomic) XJGestureButton *xjGestureButton;
 @property (assign, nonatomic) Direction direction;
-@property (assign, nonatomic) CGPoint startPoint;
-@property (assign, nonatomic) CGFloat startVB;
-@property (assign, nonatomic) CGFloat startVideoRate;
+@property (assign, nonatomic) CGPoint startPoint;//手势触摸起始位置
+@property (assign, nonatomic) CGFloat startVB;//记录当前音量/亮度
+@property (assign, nonatomic) CGFloat startVideoRate;//开始进度
 
 @property (strong, nonatomic) MPVolumeView *volumeView;//控制音量的view
 @property (strong, nonatomic) UISlider *volumeViewSlider;//控制音量
@@ -83,6 +83,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     return self;
 }
 
+
 #pragma mark - 初始化播放器
 - (void)xjPlayerInit{
     //限制锁屏
@@ -102,8 +103,16 @@ typedef NS_ENUM(NSUInteger, Direction) {
 - (void)addToolView{
     
     xjTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showOrHidenMenuView)];
+    xjTapGesture.numberOfTapsRequired = 1;
     xjTapGesture.cancelsTouchesInView = NO;
     [self.xjGestureButton addGestureRecognizer:xjTapGesture];
+    
+    xjTwoTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(playOrPauseAction)];
+    xjTwoTapGesture.numberOfTapsRequired = 2;
+    xjTwoTapGesture.cancelsTouchesInView = NO;
+    [self.xjGestureButton addGestureRecognizer:xjTwoTapGesture];
+    
+    [xjTapGesture requireGestureRecognizerToFail:xjTwoTapGesture];//没有检测到双击才进行单击事件
     
     [self.xjGestureButton addSubview:self.bottomMenuView];
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
@@ -346,7 +355,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
 - (void)touchesBeganWithPoint:(CGPoint)point {
     //记录首次触摸坐标
     self.startPoint = point;
-    //检测用户是触摸屏幕的左边还是右边，以此判断用户是要调节音量还是亮度，左边是亮度，右边是音量
+    //检测用户是触摸屏幕的左边还是右边，以此判断用户是要调节音量还是亮度，左边是音量，右边是亮度
     if (self.startPoint.x <= self.xjGestureButton.frame.size.width / 2.0) {
         //音/量
         self.startVB = self.volumeViewSlider.value;
@@ -365,7 +374,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
 #pragma mark - 结束触摸
 - (void)touchesEndWithPoint:(CGPoint)point {
     if (self.direction == DirectionLeftOrRight) {
-        [self.xjPlayer seekToTime:CMTimeMakeWithSeconds(CMTimeGetSeconds(self.xjPlayer.currentItem.duration) * self.currentRate, 1) completionHandler:^(BOOL finished) {
+        [self.xjPlayer seekToTime:CMTimeMakeWithSeconds(CMTimeGetSeconds(self.xjPlayer.currentItem.duration) * self.currentRate, NSEC_PER_SEC) completionHandler:^(BOOL finished) {
             //在这里处理进度设置成功后的事情
         }];
     }
@@ -442,12 +451,22 @@ typedef NS_ENUM(NSUInteger, Direction) {
  */
 - (void)pause{
     [self.xjPlayer pause];
+    isPlay = NO;
+    [_playOrPauseBtn setImage:[UIImage imageNamed:@"play"] forState:UIControlStateNormal];
+    if ([self.delegate respondsToSelector:@selector(xjPlayerPlayOrPause:)]) {
+        [self.delegate xjPlayerPlayOrPause:NO];
+    }
 }
 /**
  *  开始
  */
 - (void)play{
     [self.xjPlayer play];
+    isPlay = YES;
+    [_playOrPauseBtn setImage:[UIImage imageNamed:@"pause"] forState:UIControlStateNormal];
+    if ([self.delegate respondsToSelector:@selector(xjPlayerPlayOrPause:)]) {
+        [self.delegate xjPlayerPlayOrPause:YES];
+    }
 }
 /**
  * 定位视频播放时间

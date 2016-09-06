@@ -29,9 +29,6 @@
     
 }
 
-- (void)haha{
-    NSLog(@"haha");
-}
 #pragma mark - xjAVPlayer代理
 - (void)nextXJPlayer{
     myPlayer.xjPlayerUrl = @"http://www.jxgbwlxy.gov.cn/tm/course/041629011/sco1/1.mp4";

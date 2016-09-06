@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 
 @protocol XJGestureButtonDelegate <NSObject>
-
 /**
  * 开始触摸
  */
