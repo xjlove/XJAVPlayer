@@ -10,6 +10,35 @@
 
 @implementation XJGestureButton
 
+- (instancetype)initWithFrame:(CGRect)frame{
+    if (self = [super initWithFrame:frame]) {
+        [self addGestureAction];
+    }
+    return self;
+}
+
+- (void)addGestureAction{
+    UITapGestureRecognizer *xjTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showOrHidenMenuView:)];
+    xjTapGesture.numberOfTapsRequired = 1;
+    xjTapGesture.cancelsTouchesInView = NO;
+    [self addGestureRecognizer:xjTapGesture];
+    
+    UITapGestureRecognizer *xjTwoTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(playOrPauseAction:)];
+    xjTwoTapGesture.numberOfTapsRequired = 2;
+    xjTwoTapGesture.cancelsTouchesInView = NO;
+    [self addGestureRecognizer:xjTwoTapGesture];
+    
+    [xjTapGesture requireGestureRecognizerToFail:xjTwoTapGesture];//没有检测到双击才进行单击事件
+}
+
+- (void)showOrHidenMenuView:(UITapGestureRecognizer*)tap{
+    [self.touchDelegate userTapGestureAction:tap];
+}
+
+- (void)playOrPauseAction:(UITapGestureRecognizer*)tap{
+    [self.touchDelegate userTapGestureAction:tap];
+}
+
 //触摸开始
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [super touchesBegan:touches withEvent:event];

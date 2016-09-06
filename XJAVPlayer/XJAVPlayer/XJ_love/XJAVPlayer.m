@@ -23,8 +23,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
 };
 
 @interface XJAVPlayer ()<XJGestureButtonDelegate>{
-    UITapGestureRecognizer *xjTapGesture;//单击收起/弹出菜单
-    UITapGestureRecognizer *xjTwoTapGesture;//双击开始/暂停
     BOOL isHiden;//底部菜单是否收起
     BOOL isPlay;//是否播放
     BOOL isFull;//是否全屏
@@ -102,18 +100,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
 
 #pragma mark - 添加控件
 - (void)addToolView{
-    
-    xjTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showOrHidenMenuView)];
-    xjTapGesture.numberOfTapsRequired = 1;
-    xjTapGesture.cancelsTouchesInView = NO;
-    [self.xjGestureButton addGestureRecognizer:xjTapGesture];
-    
-    xjTwoTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(playOrPauseAction)];
-    xjTwoTapGesture.numberOfTapsRequired = 2;
-    xjTwoTapGesture.cancelsTouchesInView = NO;
-    [self.xjGestureButton addGestureRecognizer:xjTwoTapGesture];
-    
-    [xjTapGesture requireGestureRecognizerToFail:xjTwoTapGesture];//没有检测到双击才进行单击事件
     
     self.link = [CADisplayLink displayLinkWithTarget:self selector:@selector(upadte)];//和屏幕频率刷新相同的定时器
     [self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
@@ -459,6 +445,13 @@ typedef NS_ENUM(NSUInteger, Direction) {
     }
 }
 
+- (void)userTapGestureAction:(UITapGestureRecognizer *)tap{
+    if (tap.numberOfTapsRequired == 1) {
+        [self showOrHidenMenuView];
+    }else if (tap.numberOfTapsRequired == 2){
+        [self playOrPauseAction];
+    }
+}
 
 #pragma mark - 外部接口
 /**
@@ -466,7 +459,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
  */
 - (void)removeXJplayerBottomMenu{
     [self.bottomMenuView removeFromSuperview];
-    [self removeGestureRecognizer:xjTapGesture];
 }
 /**
  *  暂停
