@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+@class XJGestureButton;
 
 @protocol XJAVPlayerDelegate <NSObject>
 @optional
@@ -31,6 +32,10 @@
 @interface XJAVPlayer : UIView
 
 @property (nonatomic, strong) id<XJAVPlayerDelegate> delegate;
+/**
+ *  如果自己添加菜单，建议添加到这个button上；
+ */
+@property (strong, nonatomic) XJGestureButton *xjGestureButton;
 /**
  *  视屏链接
  */

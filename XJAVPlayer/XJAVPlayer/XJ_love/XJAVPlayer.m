@@ -40,20 +40,19 @@ typedef NS_ENUM(NSUInteger, Direction) {
 @property (nonatomic, strong) UISlider *playSlider;//播放滑动条
 @property (nonatomic, strong) UIButton *fullOrSmallBtn;//放大/缩小按钮
 @property (nonatomic, strong) UILabel *timeLabel;//时间标签
-@property (nonatomic, strong) UIActivityIndicatorView *loadingView;
+@property (nonatomic, strong) UIActivityIndicatorView *loadingView;//菊花图
 
 @property (nonatomic, strong) AVPlayer *xjPlayer;
 @property (nonatomic, strong) AVPlayerItem *xjPlayerItem;
 
 @property (nonatomic, strong) id playbackTimeObserver;//界面更新时间ID
 @property (nonatomic, strong) NSString *avTotalTime;//视屏时间总长；
-
-@property (strong, nonatomic) XJGestureButton *xjGestureButton;
 @property (assign, nonatomic) Direction direction;
 @property (assign, nonatomic) CGPoint startPoint;//手势触摸起始位置
 @property (assign, nonatomic) CGFloat startVB;//记录当前音量/亮度
 @property (assign, nonatomic) CGFloat startVideoRate;//开始进度
-
+@property (strong, nonatomic) CADisplayLink *link;
+@property (assign, nonatomic) NSTimeInterval lastTime;
 @property (strong, nonatomic) MPVolumeView *volumeView;//控制音量的view
 @property (strong, nonatomic) UISlider *volumeViewSlider;//控制音量
 @property (assign, nonatomic) CGFloat currentRate;//当期视频播放的进度
@@ -83,7 +82,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
     return self;
 }
 
-
 #pragma mark - 初始化播放器
 - (void)xjPlayerInit{
     //限制锁屏
@@ -92,6 +90,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
     [self.xjPlayerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];//监听status属性变化
     [self.xjPlayerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];//见天loadedTimeRanges属性变化
     
+    if (self.xjPlayer) {
+        self.xjPlayer = nil;
+    }
     self.xjPlayer = [AVPlayer playerWithPlayerItem:self.xjPlayerItem];
     [self setPlayer:self.xjPlayer];
     
@@ -113,6 +114,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
     [self.xjGestureButton addGestureRecognizer:xjTwoTapGesture];
     
     [xjTapGesture requireGestureRecognizerToFail:xjTwoTapGesture];//没有检测到双击才进行单击事件
+    
+    self.link = [CADisplayLink displayLinkWithTarget:self selector:@selector(upadte)];//和屏幕频率刷新相同的定时器
+    [self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
     
     [self.xjGestureButton addSubview:self.bottomMenuView];
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
@@ -263,6 +267,24 @@ typedef NS_ENUM(NSUInteger, Direction) {
         [weakSelf.playOrPauseBtn setImage:[UIImage imageNamed:@"play"] forState:UIControlStateNormal];
         isPlay = NO;
     }];
+}
+
+//刷新，看播放是否卡顿
+- (void)upadte
+{
+    NSTimeInterval current = CMTimeGetSeconds(self.xjPlayer.currentTime);
+    if (current!=self.lastTime) {
+        //没有卡顿
+        [self.loadingView stopAnimating];
+    }else{
+        if (!isPlay) {
+            [self.loadingView stopAnimating];
+            return;
+        }else{
+            [self.loadingView startAnimating];
+        }
+    }
+    self.lastTime = current;
 }
 
 #pragma mark - 屏幕方向改变的监听
@@ -450,23 +472,13 @@ typedef NS_ENUM(NSUInteger, Direction) {
  *  暂停
  */
 - (void)pause{
-    [self.xjPlayer pause];
-    isPlay = NO;
-    [_playOrPauseBtn setImage:[UIImage imageNamed:@"play"] forState:UIControlStateNormal];
-    if ([self.delegate respondsToSelector:@selector(xjPlayerPlayOrPause:)]) {
-        [self.delegate xjPlayerPlayOrPause:NO];
-    }
+    [self playOrPauseAction];
 }
 /**
  *  开始
  */
 - (void)play{
-    [self.xjPlayer play];
-    isPlay = YES;
-    [_playOrPauseBtn setImage:[UIImage imageNamed:@"pause"] forState:UIControlStateNormal];
-    if ([self.delegate respondsToSelector:@selector(xjPlayerPlayOrPause:)]) {
-        [self.delegate xjPlayerPlayOrPause:YES];
-    }
+    [self playOrPauseAction];
 }
 /**
  * 定位视频播放时间
@@ -568,13 +580,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
 - (UIProgressView *)loadProgressView{
     if (_loadProgressView == nil) {
         _loadProgressView = [[UIProgressView alloc] init];
-        
-        UIGraphicsBeginImageContextWithOptions((CGSize){1,1}, NO, 0.0f);
-        UIImage *transparentImage = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-        [self.playSlider setThumbImage:[UIImage imageNamed:@"icon_progress"] forState:UIControlStateNormal];
-        [self.playSlider setMinimumTrackImage:transparentImage forState:UIControlStateNormal];
-        [self.playSlider setMaximumTrackImage:transparentImage forState:UIControlStateNormal];
     }
     return _loadProgressView;
 }
@@ -583,6 +588,14 @@ typedef NS_ENUM(NSUInteger, Direction) {
     if (_playSlider == nil) {
         _playSlider = [[UISlider alloc] init];
         _playSlider.minimumValue = 0.0;
+        
+        UIGraphicsBeginImageContextWithOptions((CGSize){1,1}, NO, 0.0f);
+        UIImage *transparentImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        [self.playSlider setThumbImage:[UIImage imageNamed:@"icon_progress"] forState:UIControlStateNormal];
+        [self.playSlider setMinimumTrackImage:transparentImage forState:UIControlStateNormal];
+        [self.playSlider setMaximumTrackImage:transparentImage forState:UIControlStateNormal];
+        
         [_playSlider addTarget:self action:@selector(playSliderValueChanging:) forControlEvents:UIControlEventValueChanged];
         [_playSlider addTarget:self action:@selector(playSliderValueDidChanged:) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -649,6 +662,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     [self.xjPlayerItem removeObserver:self forKeyPath:@"loadedTimeRanges" context:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.xjPlayerItem];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
+    [self.link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
     [self.xjPlayer removeTimeObserver:self.playbackTimeObserver];
     [UIApplication sharedApplication].idleTimerDisabled=NO;
 }
