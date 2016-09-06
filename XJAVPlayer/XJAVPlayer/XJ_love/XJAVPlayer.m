@@ -8,12 +8,22 @@
 
 #import "XJAVPlayer.h"
 #import <AVFoundation/AVFoundation.h>
+#import <AVKit/AVKit.h>
+#import <MediaPlayer/MediaPlayer.h>
 #import "UIView+SCYCategory.h"
 #import "UIDevice+XJDevice.h"
+#import "XJGestureButton.h"
 
 #define WS(weakSelf) __unsafe_unretained __typeof(&*self)weakSelf = self;
 
-@interface XJAVPlayer (){
+typedef NS_ENUM(NSUInteger, Direction) {
+    DirectionLeftOrRight,
+    DirectionUpOrDown,
+    DirectionNone
+};
+
+
+@interface XJAVPlayer ()<XJGestureButtonDelegate>{
     UITapGestureRecognizer *xjTapGesture;//单击收起/弹出菜单
     BOOL isHiden;//底部菜单是否收起
     BOOL isPlay;//是否播放
@@ -37,6 +47,16 @@
 
 @property (nonatomic, strong) id playbackTimeObserver;//界面更新时间ID
 @property (nonatomic, strong) NSString *avTotalTime;//视屏时间总长；
+
+@property (strong, nonatomic) XJGestureButton *xjGestureButton;
+@property (assign, nonatomic) Direction direction;
+@property (assign, nonatomic) CGPoint startPoint;
+@property (assign, nonatomic) CGFloat startVB;
+@property (assign, nonatomic) CGFloat startVideoRate;
+
+@property (strong, nonatomic) MPVolumeView *volumeView;//控制音量的view
+@property (strong, nonatomic) UISlider *volumeViewSlider;//控制音量
+@property (assign, nonatomic) CGFloat currentRate;//当期视频播放的进度
 
 @end
 
@@ -63,6 +83,7 @@
     return self;
 }
 
+#pragma mark - 初始化播放器
 - (void)xjPlayerInit{
     //限制锁屏
     [UIApplication sharedApplication].idleTimerDisabled=YES;
@@ -82,12 +103,13 @@
     
     xjTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showOrHidenMenuView)];
     xjTapGesture.cancelsTouchesInView = NO;
-    [self addGestureRecognizer:xjTapGesture];
+    [self.xjGestureButton addGestureRecognizer:xjTapGesture];
     
-    [self addSubview:self.bottomMenuView];
+    [self.xjGestureButton addSubview:self.bottomMenuView];
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
     tap.cancelsTouchesInView = NO;
     [self.bottomMenuView addGestureRecognizer:tap];//防止bottomMenuView也响应了self这个view的单击手势
+    [self addSubview:self.xjGestureButton];
     [self.bottomMenuView addSubview:self.playOrPauseBtn];
     [self.bottomMenuView addSubview:self.nextPlayerBtn];
     [self.bottomMenuView addSubview:self.fullOrSmallBtn];
@@ -99,7 +121,6 @@
 
 #pragma mark - 单击隐藏或者展开底部菜单
 - (void)showOrHidenMenuView{
-    NSLog(@"haha");
     if (isHiden) {
         [UIView animateWithDuration:0.3 animations:^{
             self.bottomMenuView.hidden  = NO;
@@ -111,10 +132,6 @@
             isHiden = YES;
         }];
     }
-}
-#pragma mark - 调节音量
-- (void)changeXJPlayerVolume:(id)sender{
-    
 }
 
 #pragma mark - 控件事件
@@ -239,6 +256,7 @@
     }];
 }
 
+#pragma mark - 屏幕方向改变的监听
 //屏幕方向改变时的监听
 - (void)orientChange:(NSNotification *)notification{
     UIDeviceOrientation orient = [[UIDevice currentDevice] orientation];
@@ -321,6 +339,95 @@
     NSTimeInterval result = startSeconds+durationSeconds;//计算缓冲进度
     return result;
 }
+
+#pragma mark - 自定义Button的代理***********************************************************
+#pragma mark - 开始触摸
+/*************************************************************************/
+- (void)touchesBeganWithPoint:(CGPoint)point {
+    //记录首次触摸坐标
+    self.startPoint = point;
+    //检测用户是触摸屏幕的左边还是右边，以此判断用户是要调节音量还是亮度，左边是亮度，右边是音量
+    if (self.startPoint.x <= self.xjGestureButton.frame.size.width / 2.0) {
+        //音/量
+        self.startVB = self.volumeViewSlider.value;
+    } else {
+        //亮度
+        self.startVB = [UIScreen mainScreen].brightness;
+    }
+    //方向置为无
+    self.direction = DirectionNone;
+    //记录当前视频播放的进度
+    CMTime ctime = self.xjPlayer.currentTime;
+    self.startVideoRate = ctime.value / ctime.timescale / CMTimeGetSeconds(self.xjPlayer.currentItem.duration);;
+    
+}
+
+#pragma mark - 结束触摸
+- (void)touchesEndWithPoint:(CGPoint)point {
+    if (self.direction == DirectionLeftOrRight) {
+        [self.xjPlayer seekToTime:CMTimeMakeWithSeconds(CMTimeGetSeconds(self.xjPlayer.currentItem.duration) * self.currentRate, 1) completionHandler:^(BOOL finished) {
+            //在这里处理进度设置成功后的事情
+        }];
+    }
+}
+
+#pragma mark - 拖动
+- (void)touchesMoveWithPoint:(CGPoint)point {
+    //得出手指在Button上移动的距离
+    CGPoint panPoint = CGPointMake(point.x - self.startPoint.x, point.y - self.startPoint.y);
+    //分析出用户滑动的方向
+    if (self.direction == DirectionNone) {
+        if (panPoint.x >= 30 || panPoint.x <= -30) {
+            //进度
+            self.direction = DirectionLeftOrRight;
+        } else if (panPoint.y >= 30 || panPoint.y <= -30) {
+            //音量和亮度
+            self.direction = DirectionUpOrDown;
+        }
+    }
+    
+    if (self.direction == DirectionNone) {
+        return;
+    } else if (self.direction == DirectionUpOrDown) {
+        //音量和亮度
+        if (self.startPoint.x <= self.xjGestureButton.frame.size.width / 2.0) {
+            //音量
+            if (panPoint.y < 0) {
+                //增大音量
+                [self.volumeViewSlider setValue:self.startVB + (-panPoint.y / 30.0 / 10) animated:YES];
+                if (self.startVB + (-panPoint.y / 30 / 10) - self.volumeViewSlider.value >= 0.1) {
+                    [self.volumeViewSlider setValue:0.1 animated:NO];
+                    [self.volumeViewSlider setValue:self.startVB + (-panPoint.y / 30.0 / 10) animated:YES];
+                }
+                
+            } else {
+                //减少音量
+                [self.volumeViewSlider setValue:self.startVB - (panPoint.y / 30.0 / 10) animated:YES];
+            }
+            
+        } else {
+            
+            //调节亮度
+            if (panPoint.y < 0) {
+                //增加亮度
+                [[UIScreen mainScreen] setBrightness:self.startVB + (-panPoint.y / 30.0 / 10)];
+            } else {
+                //减少亮度
+                [[UIScreen mainScreen] setBrightness:self.startVB - (panPoint.y / 30.0 / 10)];
+            }
+        }
+    } else if (self.direction == DirectionLeftOrRight ) {
+        //进度
+        CGFloat rate = self.startVideoRate + (panPoint.x / 30.0 / 20.0);
+        if (rate > 1) {
+            rate = 1;
+        } else if (rate < 0) {
+            rate = 0;
+        }
+        self.currentRate = rate;
+    }
+}
+
 
 #pragma mark - 外部接口
 /**
@@ -471,15 +578,43 @@
     return _loadingView;
 }
 
+- (MPVolumeView *)volumeView {
+    if (_volumeView == nil) {
+        _volumeView  = [[MPVolumeView alloc] init];
+        [_volumeView sizeToFit];
+        for (UIView *view in [_volumeView subviews]){
+            if ([view.class.description isEqualToString:@"MPVolumeSlider"]){
+                self.volumeViewSlider = (UISlider*)view;
+                break;
+            }
+        }
+    }
+    return _volumeView;
+}
+
+- (XJGestureButton *)xjGestureButton{
+    if (_xjGestureButton == nil) {
+        //添加自定义的Button到视频画面上
+        _xjGestureButton = [[XJGestureButton alloc] initWithFrame:xjPlayerFrame];
+        _xjGestureButton.touchDelegate = self;
+    }
+    return _xjGestureButton;
+}
+
 //布局
 - (void)layoutSubviews{
-
-    self.bottomMenuView.frame = CGRectMake(0, self.height-40, self.width, 40);
+    
+    self.bottomMenuView.frame = CGRectMake(0, self.height-60, self.width, 40);
     self.playOrPauseBtn.frame = CGRectMake(self.bottomMenuView.left+5, 8, 36, 23);
     if (isFull) {
         self.nextPlayerBtn.frame = CGRectMake(self.playOrPauseBtn.right, 5, 30, 30);
+        self.bottomMenuView.frame = CGRectMake(0, self.height-40, self.width, 40);
+        self.xjGestureButton.frame = self.window.bounds;
+        self.volumeView.frame = CGRectMake(0, 0, self.frame.size.height, self.frame.size.height * 9.0 / 16.0);
     }else{
         self.nextPlayerBtn.frame = CGRectMake(self.playOrPauseBtn.right+5, 5, 0, 0);
+        self.xjGestureButton.frame = xjPlayerFrame;
+        self.volumeView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.width * 9.0 / 16.0);
     }
     self.fullOrSmallBtn.frame = CGRectMake(self.bottomMenuView.width-35, 0, 35, self.bottomMenuView.height);
     self.timeLabel.frame = CGRectMake(self.fullOrSmallBtn.left-108, 10, 108, 20);
@@ -494,6 +629,7 @@
     [self.xjPlayerItem removeObserver:self forKeyPath:@"status" context:nil];
     [self.xjPlayerItem removeObserver:self forKeyPath:@"loadedTimeRanges" context:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.xjPlayerItem];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
     [self.xjPlayer removeTimeObserver:self.playbackTimeObserver];
     [UIApplication sharedApplication].idleTimerDisabled=NO;
 }
