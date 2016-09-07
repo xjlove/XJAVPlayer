@@ -9,8 +9,9 @@
 #import "ViewController.h"
 #import "XJAVPlayer.h"
 
-@interface ViewController ()<XJAVPlayerDelegate>{
+@interface ViewController ()<XJAVPlayerDelegate,UIScrollViewDelegate>{
     XJAVPlayer *myPlayer;
+    UIScrollView *scroll;
 }
 
 @end
@@ -22,12 +23,56 @@
     
     self.view.backgroundColor = [UIColor whiteColor];
     
-    myPlayer = [[XJAVPlayer alloc] initWithFrame:CGRectMake(0, 20, self.view.frame.size.width, 200)];
+    myPlayer = [[XJAVPlayer alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 200)];
     myPlayer.delegate = self;
     myPlayer.xjPlayerUrl = @"http://static.tripbe.com/videofiles/20121214/9533522808.f4v.mp4";
-    [self.view addSubview:myPlayer];
+//    [self.view addSubview:myPlayer];
+    
+    scroll = [[UIScrollView alloc] initWithFrame:self.view.frame];
+    scroll.delegate = self;
+    scroll.backgroundColor = [UIColor redColor];
+    scroll.contentSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height+280);
+    [scroll addSubview:myPlayer];
+    
+    [self.view addSubview:scroll];
+    
+    NSLog(@"%@",[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]);
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientChange:) name:UIDeviceOrientationDidChangeNotification object:nil];//注册监听，屏幕方向改变
     
 }
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    if (scrollView.contentOffset.y == 0) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"top" object:nil];
+        [scrollView addSubview:myPlayer];
+    }
+}
+#pragma mark - 屏幕方向改变的监听
+//屏幕方向改变时的监听
+- (void)orientChange:(NSNotification *)notification{
+    UIDeviceOrientation orient = [[UIDevice currentDevice] orientation];
+    switch (orient) {
+        case UIDeviceOrientationPortrait:            // Device oriented vertically, home button on the bottom
+        {
+            scroll.frame = self.view.frame;
+        }
+            break;
+        case UIDeviceOrientationLandscapeLeft:      // Device oriented horizontally, home button on the right
+        {
+            scroll.frame = self.view.window.bounds;
+        }
+            break;
+        case UIDeviceOrientationLandscapeRight:      // Device oriented horizontally, home button on the left
+        {
+            scroll.frame = self.view.window.bounds;
+        }
+            break;
+        default:
+            break;
+    }
+}
+
 
 #pragma mark - xjAVPlayer代理
 - (void)nextXJPlayer{

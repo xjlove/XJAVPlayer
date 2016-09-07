@@ -96,6 +96,8 @@ typedef NS_ENUM(NSUInteger, Direction) {
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(xjPlayerEndPlay:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.xjPlayerItem];//注册监听，视屏播放完成
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientChange:) name:UIDeviceOrientationDidChangeNotification object:nil];//注册监听，屏幕方向改变
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(topXJPlayer) name:@"top" object:nil];
 }
 
 #pragma mark - 添加控件
@@ -115,7 +117,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     [self.bottomMenuView addSubview:self.timeLabel];
     [self.bottomMenuView addSubview:self.loadProgressView];
     [self.bottomMenuView addSubview:self.playSlider];
-    [self addSubview:self.loadingView];
+    [self.xjGestureButton addSubview:self.loadingView];
 }
 
 #pragma mark - 单击隐藏或者展开底部菜单
@@ -343,9 +345,38 @@ typedef NS_ENUM(NSUInteger, Direction) {
         [weakSelf.loadingView stopAnimating];
         CGFloat currentSecond = playerItem.currentTime.value/playerItem.currentTime.timescale;//获取当前时间
         [weakSelf.playSlider setValue:currentSecond animated:YES];
+        
+        if (!weakSelf->isFull) {
+            CGRect rect = [weakSelf.window convertRect:weakSelf.frame fromView:weakSelf.superview];
+            
+            if (rect.origin.y+(weakSelf.frame.size.height*0.3) <= 0) {//当前XJPlayerView移除到屏幕外一半时，就缩到左下角
+                [weakSelf bottomRightXJPlayer];
+            }
+        }
+        
         NSString *timeString = [weakSelf xjPlayerTimeStyle:currentSecond];
         weakSelf.timeLabel.text = [NSString stringWithFormat:@"00:%@/00:%@",timeString,weakSelf.avTotalTime];
     }];
+}
+
+- (void)bottomRightXJPlayer{
+    self.frame = CGRectMake(self.window.right-270, self.window.height-170, 250, 150);
+    
+    [self.window addSubview:self];
+    [self.window bringSubviewToFront:self];
+    
+    if (!isHiden) {
+        self.bottomMenuView.hidden = YES;
+    }
+    self.xjGestureButton.hidden = YES;
+}
+
+- (void)topXJPlayer{
+    self.frame = xjPlayerFrame;
+    if (!isHiden) {
+        self.bottomMenuView.hidden = NO;
+    }
+    self.xjGestureButton.hidden = NO;
 }
 //计算缓冲区
 - (NSTimeInterval)xjPlayerAvailableDuration{
@@ -628,7 +659,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
 //布局
 - (void)layoutSubviews{
     
-    self.bottomMenuView.frame = CGRectMake(0, self.height-60, self.width, 40);
+    self.bottomMenuView.frame = CGRectMake(0, self.height-40, self.width, 40);
     self.playOrPauseBtn.frame = CGRectMake(self.bottomMenuView.left+5, 8, 36, 23);
     if (isFull) {
         self.nextPlayerBtn.frame = CGRectMake(self.playOrPauseBtn.right, 5, 30, 30);
@@ -637,7 +668,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
         self.volumeView.frame = CGRectMake(0, 0, self.frame.size.height, self.frame.size.height * 9.0 / 16.0);
     }else{
         self.nextPlayerBtn.frame = CGRectMake(self.playOrPauseBtn.right+5, 5, 0, 0);
-        self.xjGestureButton.frame = xjPlayerFrame;
+        self.xjGestureButton.frame = CGRectMake(0, 0, xjPlayerFrame.size.width, xjPlayerFrame.size.height);
         self.volumeView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.width * 9.0 / 16.0);
     }
     self.fullOrSmallBtn.frame = CGRectMake(self.bottomMenuView.width-35, 0, 35, self.bottomMenuView.height);
@@ -645,7 +676,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     self.loadProgressView.frame = CGRectMake(self.playOrPauseBtn.right+self.nextPlayerBtn.width+7, 20,self.timeLabel.left-self.playOrPauseBtn.right-self.nextPlayerBtn.width-14, 31);
     self.playSlider.frame = CGRectMake(self.playOrPauseBtn.right+self.nextPlayerBtn.width+5, 5, self.loadProgressView.width+4, 31);
     
-    self.loadingView.frame = CGRectMake(self.centerX, self.centerY-20, 20, 20);
+    self.loadingView.frame = CGRectMake(self.xjGestureButton.centerX, self.xjGestureButton.centerY-20, 20, 20);
     
 }
 
