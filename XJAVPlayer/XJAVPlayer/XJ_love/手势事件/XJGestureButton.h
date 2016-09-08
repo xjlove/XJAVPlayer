@@ -27,7 +27,7 @@
 /**
  *  单击时/双击时,判断tap的numberOfTapsRequired
  */
-- (void)userTapGestureAction:(UITapGestureRecognizer*)tap;
+- (void)userTapGestureAction:(UITapGestureRecognizer*)xjTap;
 
 @end
 

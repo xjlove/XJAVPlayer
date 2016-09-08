@@ -12,7 +12,7 @@
 @protocol XJAVPlayerDelegate <NSObject>
 @optional
 
-/**************************** 代理方法 *************************************/
+#pragma mark - **************************** 代理方法 *************************************/
 
 /**
  *  代理，是否全屏
@@ -37,23 +37,11 @@
 
 @property (nonatomic, strong) id<XJAVPlayerDelegate> delegate;
 
-/**************************** 外部接口 *************************************/
+#pragma mark - **************************** 外部接口 *************************************
 /**
  *  视屏链接
  */
 @property (nonatomic, strong) NSString *xjPlayerUrl;
-/**
- *  如果想自己写底部菜单，可以移除我写好的菜单；然后通过接口和代理来控制视屏；
- */
-- (void)removeXJPlayerBottomMenu;
-/**
- *  如果自己添加菜单，建议添加到这个button上；
- */
-@property (strong, nonatomic) XJGestureButton *xjGestureButton;
-/**
- *  添加,视屏view位置超出屏幕时，位置移到右下角；（慎用，还在完善）
- */
-- (void)addXJPlayerAutoMovie;
 /**
  *  暂停
  */
@@ -80,5 +68,27 @@
  *
  */
 - (Float64)totalTime;
+
+#pragma mark - **************************** 自由选择 *************************************
+/**
+ *  如果想自己写底部菜单，可以移除我写好的菜单；然后通过接口和代理来控制视屏；
+ */
+- (void)removeXJPlayerBottomMenu;
+/**
+ *  如果自己添加菜单，建议添加到这个button上；
+ */
+@property (strong, nonatomic) XJGestureButton *xjGestureButton;
+/**
+ *  添加,视屏view位置超出屏幕时，位置移到右下角；（慎用）
+ */
+- (void)addXJPlayerAutoMovie;
+/**
+ *  如果使用了addXJPlayerAutoMovie，就可以获得view最开始的位置
+ */
+@property (nonatomic, assign) CGRect originalFrame;
+/**
+ *  移到最开始的位置
+ */
+- (void)movieXJPlayeToOriginalPosition;
 
 @end

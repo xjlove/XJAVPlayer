@@ -23,7 +23,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
 };
 
 @interface XJAVPlayer ()<XJGestureButtonDelegate>{
-    BOOL isAutoMovie;
+    UITapGestureRecognizer *tap;
+    BOOL isAutoMovie;//是否开启自动缩到右下角
+    BOOL isSmall;//判断是否在右下角
     BOOL isHiden;//底部菜单是否收起
     BOOL isPlay;//是否播放
     BOOL isFull;//是否全屏
@@ -77,6 +79,10 @@ typedef NS_ENUM(NSUInteger, Direction) {
         self.backgroundColor = [UIColor blackColor];
         [self setUserInteractionEnabled:NO];
         xjPlayerFrame = frame;
+        self.originalFrame = frame;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(xjPlayerEndPlay:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.xjPlayerItem];//注册监听，视屏播放完成
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientChange:) name:UIDeviceOrientationDidChangeNotification object:nil];//注册监听，屏幕方向改变
     }
     return self;
 }
@@ -94,11 +100,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
     }
     self.xjPlayer = [AVPlayer playerWithPlayerItem:self.xjPlayerItem];
     [self setPlayer:self.xjPlayer];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(xjPlayerEndPlay:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.xjPlayerItem];//注册监听，视屏播放完成
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientChange:) name:UIDeviceOrientationDidChangeNotification object:nil];//注册监听，屏幕方向改变
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(topXJPlayer) name:@"top" object:nil];
 }
 
 #pragma mark - 添加控件
@@ -108,9 +109,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
     [self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
     
     [self.xjGestureButton addSubview:self.bottomMenuView];
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
+    UITapGestureRecognizer *nilTap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
     tap.cancelsTouchesInView = NO;
-    [self.bottomMenuView addGestureRecognizer:tap];//防止bottomMenuView也响应了self这个view的单击手势
+    [self.bottomMenuView addGestureRecognizer:nilTap];//防止bottomMenuView也响应了self这个view的单击手势
     [self addSubview:self.xjGestureButton];
     [self.bottomMenuView addSubview:self.playOrPauseBtn];
     [self.bottomMenuView addSubview:self.nextPlayerBtn];
@@ -204,10 +205,8 @@ typedef NS_ENUM(NSUInteger, Direction) {
     WS(weakSelf);
     UISlider *slider = (UISlider*)sender;
     CMTime changeTime = CMTimeMakeWithSeconds(slider.value,NSEC_PER_SEC);
-    [self.xjPlayer removeTimeObserver:self.playbackTimeObserver];//加载网络时移除监听播放状态
     [self.xjPlayer seekToTime:changeTime completionHandler:^(BOOL finished) {
         [weakSelf.xjPlayer play];
-        [self monitoringXjPlayerBack:self.xjPlayerItem];//监听播放状态
         [weakSelf.playOrPauseBtn setImage:[UIImage imageNamed:@"pause"] forState:UIControlStateNormal];
         isPlay = YES;
     }];
@@ -264,6 +263,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
     NSTimeInterval current = CMTimeGetSeconds(self.xjPlayer.currentTime);
     if (current!=self.lastTime) {
         //没有卡顿
+        if (isPlay) {
+            [self.xjPlayer play];
+        }
         [self.loadingView stopAnimating];
     }else{
         if (!isPlay) {
@@ -350,7 +352,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
         if (!weakSelf->isFull&&weakSelf->isAutoMovie) {
             CGRect rect = [weakSelf.window convertRect:weakSelf.frame fromView:weakSelf.superview];
             
-            if (rect.origin.y+(weakSelf.frame.size.height*0.3) <= 0) {//当前XJPlayerView移除到屏幕外一半时，就缩到左下角
+            if (rect.origin.y+(weakSelf.frame.size.height*0.5) <= 0) {//当前XJPlayerView移除到屏幕外一半时，就缩到左下角
                 [weakSelf bottomRightXJPlayer];
             }
         }
@@ -360,24 +362,34 @@ typedef NS_ENUM(NSUInteger, Direction) {
     }];
 }
 
+//移到右下角
 - (void)bottomRightXJPlayer{
-    self.frame = CGRectMake(self.window.right-270, self.window.height-170, 250, 150);
-    
-    [self.window addSubview:self];
-    [self.window bringSubviewToFront:self];
+    self.frame = CGRectMake(self.window.right-160, self.window.height-110, 150, 100);
+    isSmall = YES;
+    [self.superview.superview addSubview:self];
+    [self.superview.superview bringSubviewToFront:self];
     
     if (!isHiden) {
         self.bottomMenuView.hidden = YES;
     }
-    self.xjGestureButton.hidden = YES;
+    tap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
+    tap.cancelsTouchesInView = NO;
+    [self.xjGestureButton addGestureRecognizer:tap];
+//    self.xjGestureButton.hidden = YES;
 }
 
-- (void)topXJPlayer{
-    self.frame = xjPlayerFrame;
+- (void)movieXJPlayeToOriginalPosition{
+    if (!isFull) {
+        self.frame = xjPlayerFrame;
+        isSmall = NO;
+    }
+    
     if (!isHiden) {
         self.bottomMenuView.hidden = NO;
     }
-    self.xjGestureButton.hidden = NO;
+    
+    [self.xjGestureButton removeGestureRecognizer:tap];
+//    self.xjGestureButton.hidden = NO;
 }
 //计算缓冲区
 - (NSTimeInterval)xjPlayerAvailableDuration{
@@ -413,7 +425,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
 
 #pragma mark - 结束触摸
 - (void)touchesEndWithPoint:(CGPoint)point {
-    if (self.direction == DirectionLeftOrRight) {
+    if (self.direction == DirectionLeftOrRight&&!isSmall) {
         [self.xjPlayer seekToTime:CMTimeMakeWithSeconds(CMTimeGetSeconds(self.xjPlayer.currentItem.duration) * self.currentRate, NSEC_PER_SEC) completionHandler:^(BOOL finished) {
             //在这里处理进度设置成功后的事情
         }];
@@ -424,6 +436,27 @@ typedef NS_ENUM(NSUInteger, Direction) {
 - (void)touchesMoveWithPoint:(CGPoint)point {
     //得出手指在Button上移动的距离
     CGPoint panPoint = CGPointMake(point.x - self.startPoint.x, point.y - self.startPoint.y);
+    
+    if (isSmall) {
+        // Calculate offset
+        float dx = point.x - self.startPoint.x;
+        float dy = point.y - self.startPoint.y;
+        CGPoint newcenter = CGPointMake(self.center.x + dx, self.center.y + dy);
+        
+        //设置移动区域
+        // Bound movement into parent bounds
+        float halfx = CGRectGetMidX(self.bounds);
+        newcenter.x = MAX(halfx, newcenter.x);
+        newcenter.x = MIN(self.superview.bounds.size.width - halfx, newcenter.x);
+        
+        float halfy = CGRectGetMidY(self.bounds);
+        newcenter.y = MAX(halfy, newcenter.y);
+        newcenter.y = MIN(self.superview.bounds.size.height - halfy, newcenter.y);
+        
+        // Set new location
+        self.center = newcenter;
+    }
+    
     //分析出用户滑动的方向
     if (self.direction == DirectionNone) {
         if (panPoint.x >= 30 || panPoint.x <= -30) {
@@ -437,7 +470,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     
     if (self.direction == DirectionNone) {
         return;
-    } else if (self.direction == DirectionUpOrDown) {
+    } else if (self.direction == DirectionUpOrDown&&!isSmall) {
         //音量和亮度
         if (self.startPoint.x <= self.xjGestureButton.frame.size.width / 2.0) {
             //音量
@@ -454,7 +487,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
                 [self.volumeViewSlider setValue:self.startVB - (panPoint.y / 30.0 / 10) animated:YES];
             }
             
-        } else {
+        } else if(!isSmall){
             
             //调节亮度
             if (panPoint.y < 0) {
@@ -465,7 +498,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
                 [[UIScreen mainScreen] setBrightness:self.startVB - (panPoint.y / 30.0 / 10)];
             }
         }
-    } else if (self.direction == DirectionLeftOrRight ) {
+    } else if (self.direction == DirectionLeftOrRight &&!isSmall) {
         //进度
         CGFloat rate = self.startVideoRate + (panPoint.x / 30.0 / 20.0);
         if (rate > 1) {
@@ -477,10 +510,10 @@ typedef NS_ENUM(NSUInteger, Direction) {
     }
 }
 
-- (void)userTapGestureAction:(UITapGestureRecognizer *)tap{
-    if (tap.numberOfTapsRequired == 1) {
+- (void)userTapGestureAction:(UITapGestureRecognizer *)xjTap{
+    if (xjTap.numberOfTapsRequired == 1) {
         [self showOrHidenMenuView];
-    }else if (tap.numberOfTapsRequired == 2){
+    }else if (xjTap.numberOfTapsRequired == 2){
         [self playOrPauseAction];
     }
 }

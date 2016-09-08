@@ -23,57 +23,32 @@
     
     self.view.backgroundColor = [UIColor whiteColor];
     
-    myPlayer = [[XJAVPlayer alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 200)];
+    myPlayer = [[XJAVPlayer alloc] initWithFrame:CGRectMake(0, 20, self.view.frame.size.width, 200)];
     myPlayer.delegate = self;
+    [myPlayer addXJPlayerAutoMovie];//添加自动缩到右下角（播放/小屏的时候才管用。此功能慎用；）
     myPlayer.xjPlayerUrl = @"http://static.tripbe.com/videofiles/20121214/9533522808.f4v.mp4";
-//    [self.view addSubview:myPlayer];
     
-    scroll = [[UIScrollView alloc] initWithFrame:self.view.frame];
+    scroll = [[UIScrollView alloc] init];
     scroll.delegate = self;
-    scroll.contentSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height+400);
-    [scroll addSubview:myPlayer];
     
+    [scroll addSubview:myPlayer];
     [self.view addSubview:scroll];
     
-    NSLog(@"%@",[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]);
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientChange:) name:UIDeviceOrientationDidChangeNotification object:nil];//注册监听，屏幕方向改变
-    
+//    NSLog(@"%@",[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]);//查看缓存的路径；
+}
+
+- (void)viewDidLayoutSubviews{
+    scroll.frame = self.view.frame;
+    scroll.contentSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height+400);
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-//     NSLog(@"%f",scrollView.contentOffset.y + myPlayer.frame.origin.y);
-    if (scrollView.contentOffset.y + myPlayer.frame.origin.y == 100) {
-        NSLog(@"%f",scrollView.contentOffset.y - myPlayer.frame.origin.y);
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"top" object:nil];
+    //如果添加了自动缩到右下角，在scrollView的代理里面还在上这句；
+    if (scrollView.contentOffset.y - myPlayer.originalFrame.origin.y <= 0) {
+        [myPlayer movieXJPlayeToOriginalPosition];
         [scrollView addSubview:myPlayer];
     }
 }
-#pragma mark - 屏幕方向改变的监听
-//屏幕方向改变时的监听
-- (void)orientChange:(NSNotification *)notification{
-    UIDeviceOrientation orient = [[UIDevice currentDevice] orientation];
-    switch (orient) {
-        case UIDeviceOrientationPortrait:            // Device oriented vertically, home button on the bottom
-        {
-            scroll.frame = self.view.frame;
-        }
-            break;
-        case UIDeviceOrientationLandscapeLeft:      // Device oriented horizontally, home button on the right
-        {
-            scroll.frame = self.view.window.bounds;
-        }
-            break;
-        case UIDeviceOrientationLandscapeRight:      // Device oriented horizontally, home button on the left
-        {
-            scroll.frame = self.view.window.bounds;
-        }
-            break;
-        default:
-            break;
-    }
-}
-
 
 #pragma mark - xjAVPlayer代理
 - (void)nextXJPlayer{
