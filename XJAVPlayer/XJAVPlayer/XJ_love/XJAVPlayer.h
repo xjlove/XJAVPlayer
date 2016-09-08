@@ -11,6 +11,9 @@
 
 @protocol XJAVPlayerDelegate <NSObject>
 @optional
+
+/**************************** 代理方法 *************************************/
+
 /**
  *  代理，是否全屏
  *
@@ -27,15 +30,14 @@
  *  代理，下一个视屏（全屏的时候才有）
  */
 - (void)nextXJPlayer;
+
 @end
 
 @interface XJAVPlayer : UIView
 
 @property (nonatomic, strong) id<XJAVPlayerDelegate> delegate;
-/**
- *  如果自己添加菜单，建议添加到这个button上；
- */
-@property (strong, nonatomic) XJGestureButton *xjGestureButton;
+
+/**************************** 外部接口 *************************************/
 /**
  *  视屏链接
  */
@@ -43,7 +45,15 @@
 /**
  *  如果想自己写底部菜单，可以移除我写好的菜单；然后通过接口和代理来控制视屏；
  */
-- (void)removeXJplayerBottomMenu;
+- (void)removeXJPlayerBottomMenu;
+/**
+ *  如果自己添加菜单，建议添加到这个button上；
+ */
+@property (strong, nonatomic) XJGestureButton *xjGestureButton;
+/**
+ *  添加,视屏view位置超出屏幕时，位置移到右下角；（慎用，还在完善）
+ */
+- (void)addXJPlayerAutoMovie;
 /**
  *  暂停
  */

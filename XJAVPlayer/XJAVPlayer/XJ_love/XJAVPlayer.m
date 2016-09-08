@@ -23,6 +23,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
 };
 
 @interface XJAVPlayer ()<XJGestureButtonDelegate>{
+    BOOL isAutoMovie;
     BOOL isHiden;//底部菜单是否收起
     BOOL isPlay;//是否播放
     BOOL isFull;//是否全屏
@@ -346,7 +347,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
         CGFloat currentSecond = playerItem.currentTime.value/playerItem.currentTime.timescale;//获取当前时间
         [weakSelf.playSlider setValue:currentSecond animated:YES];
         
-        if (!weakSelf->isFull) {
+        if (!weakSelf->isFull&&weakSelf->isAutoMovie) {
             CGRect rect = [weakSelf.window convertRect:weakSelf.frame fromView:weakSelf.superview];
             
             if (rect.origin.y+(weakSelf.frame.size.height*0.3) <= 0) {//当前XJPlayerView移除到屏幕外一半时，就缩到左下角
@@ -488,8 +489,11 @@ typedef NS_ENUM(NSUInteger, Direction) {
 /**
  *  如果想自己写底部菜单，可以移除我写好的菜单；然后通过接口和代理来控制视屏;
  */
-- (void)removeXJplayerBottomMenu{
+- (void)removeXJPlayerBottomMenu{
     [self.bottomMenuView removeFromSuperview];
+}
+- (void)addXJPlayerAutoMovie{
+    isAutoMovie = YES;
 }
 /**
  *  暂停

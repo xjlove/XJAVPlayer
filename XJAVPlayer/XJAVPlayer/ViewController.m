@@ -30,8 +30,7 @@
     
     scroll = [[UIScrollView alloc] initWithFrame:self.view.frame];
     scroll.delegate = self;
-    scroll.backgroundColor = [UIColor redColor];
-    scroll.contentSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height+280);
+    scroll.contentSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height+400);
     [scroll addSubview:myPlayer];
     
     [self.view addSubview:scroll];
@@ -43,7 +42,9 @@
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-    if (scrollView.contentOffset.y == 0) {
+//     NSLog(@"%f",scrollView.contentOffset.y + myPlayer.frame.origin.y);
+    if (scrollView.contentOffset.y + myPlayer.frame.origin.y == 100) {
+        NSLog(@"%f",scrollView.contentOffset.y - myPlayer.frame.origin.y);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"top" object:nil];
         [scrollView addSubview:myPlayer];
     }
