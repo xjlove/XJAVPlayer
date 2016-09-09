@@ -364,7 +364,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
 
 //移到右下角
 - (void)bottomRightXJPlayer{
-    self.frame = CGRectMake(self.window.right-160, self.window.height-110, 150, 100);
+    self.frame = CGRectMake(self.window.right-160, self.window.height-150, 150, 100);
     isSmall = YES;
     [self.superview.superview addSubview:self];
     [self.superview.superview bringSubviewToFront:self];
