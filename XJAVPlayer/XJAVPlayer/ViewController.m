@@ -27,7 +27,7 @@
     myPlayer.delegate = self;
     myPlayer.xjPlayerUrl = @"http://static.tripbe.com/videofiles/20121214/9533522808.f4v.mp4";
     
-    [self.view addSubview:myPlayer];
+    [self.view addSubview:myPlayer];//(看自动缩小就把它注释了)
     
     //想看自动缩小就把注释开了
 //    [myPlayer addXJPlayerAutoMovie];//添加自动缩到右下角（播放/小屏的时候才管用。此功能慎用；）
@@ -42,7 +42,7 @@
 //    scroll.frame = self.view.frame;
 //    scroll.contentSize = CGSizeMake(self.view.frame.size.width, self.view.frame.size.height+400);
 //}
-
+//
 //- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
 //    //如果添加了自动缩到右下角，在scrollView的代理里面还在上这句；
 //    if (scrollView.contentOffset.y - myPlayer.originalFrame.origin.y <= 0) {

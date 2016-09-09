@@ -110,7 +110,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     
     [self.xjGestureButton addSubview:self.bottomMenuView];
     UITapGestureRecognizer *nilTap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
-    tap.cancelsTouchesInView = NO;
+    nilTap.cancelsTouchesInView = NO;
     [self.bottomMenuView addGestureRecognizer:nilTap];//防止bottomMenuView也响应了self这个view的单击手势
     [self addSubview:self.xjGestureButton];
     [self.bottomMenuView addSubview:self.playOrPauseBtn];
