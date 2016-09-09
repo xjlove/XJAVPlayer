@@ -57,6 +57,16 @@
 }
 
 - (void)xjPlayerFullOrSmall:(BOOL)flag{
+    
+    //如果xjPlayer的界面有导航栏或者有tabbar,在全屏代理方法里全屏时进行如下隐藏；
+    if (flag) {
+        self.navigationController.navigationBarHidden = YES;
+        self.tabBarController.tabBar.hidden = YES;
+    }else{
+        self.navigationController.navigationBarHidden = NO;
+        self.tabBarController.tabBar.hidden = YES;
+    }
+    
     if (flag) {
         /**
          *  全屏时隐藏顶部状态栏。由于iOS7.0后，如果你的plist文件已经设置View controller-based status bar appearance，value设为NO，就不用写下面的代码（我已经封装好）,如果没设置，就把下面的代码放开，就能在全屏时隐藏头部状态栏；
