@@ -688,6 +688,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     if (_xjGestureButton == nil) {
         //添加自定义的Button到视频画面上
         _xjGestureButton = [[XJGestureButton alloc] initWithFrame:xjPlayerFrame];
+        _xjGestureButton.tag = 1000;
         _xjGestureButton.touchDelegate = self;
     }
     return _xjGestureButton;
@@ -714,7 +715,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
     self.playSlider.frame = CGRectMake(self.playOrPauseBtn.right+self.nextPlayerBtn.width+5, 5, self.loadProgressView.width+4, 31);
     
     self.loadingView.frame = CGRectMake(self.xjGestureButton.centerX, self.xjGestureButton.centerY-20, 20, 20);
-    
 }
 
 - (void)dealloc {
