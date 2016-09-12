@@ -63,7 +63,7 @@
         self.tabBarController.tabBar.hidden = YES;
     }else{
         self.navigationController.navigationBarHidden = NO;
-        self.tabBarController.tabBar.hidden = YES;
+        self.tabBarController.tabBar.hidden = NO;
     }
     
     if (flag) {
