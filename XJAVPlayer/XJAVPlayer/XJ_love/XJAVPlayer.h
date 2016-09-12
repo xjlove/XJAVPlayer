@@ -85,7 +85,7 @@
 /**
  *  如果使用了addXJPlayerAutoMovie，就可以获得view最开始的位置
  */
-@property (nonatomic, assign) CGRect originalFrame;
+@property (nonatomic, assign) CGRect originalFrame;//初始位置
 /**
  *  移到最开始的位置
  */

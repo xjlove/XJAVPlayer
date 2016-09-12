@@ -13,8 +13,12 @@
 #import "UIView+SCYCategory.h"
 #import "UIDevice+XJDevice.h"
 #import "XJGestureButton.h"
+#import "TBloaderURLConnection.h"
+#import "TBVideoRequestTask.h"
 
 #define WS(weakSelf) __unsafe_unretained __typeof(&*self)weakSelf = self;
+#define IOS_VERSION  ([[[UIDevice currentDevice] systemVersion] floatValue])
+#define DownloadPath [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]
 
 typedef NS_ENUM(NSUInteger, Direction) {
     DirectionLeftOrRight,
@@ -22,7 +26,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     DirectionNone
 };
 
-@interface XJAVPlayer ()<XJGestureButtonDelegate>{
+@interface XJAVPlayer ()<XJGestureButtonDelegate,TBloaderURLConnectionDelegate>{
     UITapGestureRecognizer *tap;
     BOOL isAutoMovie;//是否开启自动缩到右下角
     BOOL isSmall;//判断是否在右下角
@@ -31,12 +35,13 @@ typedef NS_ENUM(NSUInteger, Direction) {
     BOOL isFull;//是否全屏
     BOOL isFirst;//是否第一次加载
     BOOL isAutoOrient;//自动旋转（不是用放大按钮）
-    CGRect xjPlayerFrame;//自定义的视屏大小
+    BOOL isFinishLoad; //是否下载完毕
+    CGRect xjPlayerFrame;//初始化的视屏大小
 }
 
 @property (nonatomic, strong) UIView *bottomMenuView;//底部菜单
 @property (nonatomic, strong) UIButton *playOrPauseBtn;//开始/暂停按钮
-@property (nonatomic, strong) UIButton *nextPlayerBtn;//下一个视屏
+@property (nonatomic, strong) UIButton *nextPlayerBtn;//下一个视屏（全屏时有）
 @property (nonatomic, strong) UIProgressView *loadProgressView;//缓冲进度条
 @property (nonatomic, strong) UISlider *playSlider;//播放滑动条
 @property (nonatomic, strong) UIButton *fullOrSmallBtn;//放大/缩小按钮
@@ -45,19 +50,25 @@ typedef NS_ENUM(NSUInteger, Direction) {
 
 @property (nonatomic, strong) AVPlayer *xjPlayer;
 @property (nonatomic, strong) AVPlayerItem *xjPlayerItem;
+@property (nonatomic, strong) AVURLAsset     *videoURLAsset;
+@property (nonatomic, strong) AVAsset        *videoAsset;
 
 @property (nonatomic, strong) id playbackTimeObserver;//界面更新时间ID
 @property (nonatomic, strong) NSString *avTotalTime;//视屏时间总长；
+//上下左右手势操作
 @property (assign, nonatomic) Direction direction;
 @property (assign, nonatomic) CGPoint startPoint;//手势触摸起始位置
 @property (assign, nonatomic) CGFloat startVB;//记录当前音量/亮度
 @property (assign, nonatomic) CGFloat startVideoRate;//开始进度
-@property (strong, nonatomic) CADisplayLink *link;
+@property (strong, nonatomic) CADisplayLink *link;//以屏幕刷新率进行定时操作
 @property (assign, nonatomic) NSTimeInterval lastTime;
 @property (strong, nonatomic) MPVolumeView *volumeView;//控制音量的view
 @property (strong, nonatomic) UISlider *volumeViewSlider;//控制音量
 @property (assign, nonatomic) CGFloat currentRate;//当期视频播放的进度
-
+//缓存
+@property (nonatomic, strong) TBloaderURLConnection *resouerLoader;
+@property (nonatomic, strong) NSURL *filePath;//缓存地址
+@property (nonatomic, strong) NSString *savePath;
 @end
 
 @implementation XJAVPlayer
@@ -78,11 +89,14 @@ typedef NS_ENUM(NSUInteger, Direction) {
     if (self = [super initWithFrame:frame]) {
         self.backgroundColor = [UIColor blackColor];
         [self setUserInteractionEnabled:NO];
+        
         xjPlayerFrame = frame;
         self.originalFrame = frame;
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(xjPlayerEndPlay:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.xjPlayerItem];//注册监听，视屏播放完成
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientChange:) name:UIDeviceOrientationDidChangeNotification object:nil];//注册监听，屏幕方向改变
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appDidEnterBackground) name:UIApplicationWillResignActiveNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appDidEnterPlayGround) name:UIApplicationDidBecomeActiveNotification object:nil];
     }
     return self;
 }
@@ -91,15 +105,35 @@ typedef NS_ENUM(NSUInteger, Direction) {
 - (void)xjPlayerInit{
     //限制锁屏
     [UIApplication sharedApplication].idleTimerDisabled=YES;
-    self.xjPlayerItem = [[AVPlayerItem alloc] initWithURL:[NSURL URLWithString:self.xjPlayerUrl]];
-    [self.xjPlayerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];//监听status属性变化
-    [self.xjPlayerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];//见天loadedTimeRanges属性变化
     
     if (self.xjPlayer) {
         self.xjPlayer = nil;
     }
-    self.xjPlayer = [AVPlayer playerWithPlayerItem:self.xjPlayerItem];
-    [self setPlayer:self.xjPlayer];
+    
+    //如果是ios  < 7 或者是本地资源，直接播放
+    if ([self fileExistsAtPath:self.xjPlayerUrl]) {
+        
+        self.videoAsset = [AVURLAsset URLAssetWithURL:self.filePath options:nil];
+        self.xjPlayerItem = [AVPlayerItem playerItemWithAsset:_videoAsset];
+        self.xjPlayer = [AVPlayer playerWithPlayerItem:self.xjPlayerItem];
+        [self setPlayer:self.xjPlayer];
+        
+    }else{
+        
+        self.resouerLoader = [[TBloaderURLConnection alloc] init];
+        self.resouerLoader.delegate = self;
+        self.resouerLoader.savePath = self.savePath;
+        NSURL *playUrl = [_resouerLoader getSchemeVideoURL:[NSURL URLWithString:self.xjPlayerUrl]];
+        self.videoURLAsset = [AVURLAsset URLAssetWithURL:playUrl options:nil];
+        [_videoURLAsset.resourceLoader setDelegate:_resouerLoader queue:dispatch_get_main_queue()];
+        self.xjPlayerItem = [AVPlayerItem playerItemWithAsset:_videoURLAsset];
+        
+        self.xjPlayer = [AVPlayer playerWithPlayerItem:self.xjPlayerItem];
+        [self setPlayer:self.xjPlayer];
+    }
+    
+    [self.xjPlayerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];//监听status属性变化
+    [self.xjPlayerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];//见天loadedTimeRanges属性变化
 }
 
 #pragma mark - 添加控件
@@ -212,7 +246,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     }];
 }
 
-#pragma mark - kvo监听事件
+#pragma mark - 监听事件
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
                         change:(NSDictionary<NSString *,id> *)change
@@ -278,6 +312,20 @@ typedef NS_ENUM(NSUInteger, Direction) {
     self.lastTime = current;
 }
 
+//程序进入后台（如果播放，则暂停，否则不管）
+- (void)appDidEnterBackground{
+    if (isPlay) {
+        [self.xjPlayer pause];
+        [self.xjPlayer removeTimeObserver:self.playbackTimeObserver];
+    }
+}
+//程序进入前台（退出前播放，进来后继续播放，否则不管）
+- (void)appDidEnterPlayGround{
+    if (isPlay) {
+        [self.xjPlayer play];
+        [self monitoringXjPlayerBack:self.xjPlayer.currentItem];
+    }
+}
 #pragma mark - 屏幕方向改变的监听
 //屏幕方向改变时的监听
 - (void)orientChange:(NSNotification *)notification{
@@ -375,7 +423,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     tap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
     tap.cancelsTouchesInView = NO;
     [self.xjGestureButton addGestureRecognizer:tap];
-//    self.xjGestureButton.hidden = YES;
+    //    self.xjGestureButton.hidden = YES;
 }
 
 - (void)movieXJPlayeToOriginalPosition{
@@ -389,7 +437,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     }
     
     [self.xjGestureButton removeGestureRecognizer:tap];
-//    self.xjGestureButton.hidden = NO;
+    //    self.xjGestureButton.hidden = NO;
 }
 //计算缓冲区
 - (NSTimeInterval)xjPlayerAvailableDuration{
@@ -399,6 +447,25 @@ typedef NS_ENUM(NSUInteger, Direction) {
     CGFloat durationSeconds = CMTimeGetSeconds(timeRange.duration);
     NSTimeInterval result = startSeconds+durationSeconds;//计算缓冲进度
     return result;
+}
+//判断是否存在已下载好的文件
+- (BOOL)fileExistsAtPath:(NSString *)url{
+    
+    self.savePath = [[self.xjPlayerUrl componentsSeparatedByString:@"/"] lastObject];//保存文件名是地址最后“/”后面的字符串
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *tempPath = DownloadPath;
+    NSString *str = [tempPath stringByAppendingPathComponent:[NSString stringWithFormat:@"xjPlayer/%@",self.savePath]];
+    
+    if ([fileManager fileExistsAtPath:str]) {
+        self.filePath = [NSURL fileURLWithPath:str];
+        NSLog(@"filePath:%@",str);
+        return YES;
+    }else{
+        NSLog(@"没有缓存");
+        return NO;
+    }
+    
 }
 
 #pragma mark - 自定义Button的代理***********************************************************
@@ -516,6 +583,45 @@ typedef NS_ENUM(NSUInteger, Direction) {
     }else if (xjTap.numberOfTapsRequired == 2){
         [self playOrPauseAction];
     }
+}
+
+
+#pragma mark - TBloaderURLConnectionDelegate
+
+- (void)didFinishLoadingWithTask:(TBVideoRequestTask *)task
+{
+    isFinishLoad = task.isFinishLoad;
+}
+
+//网络中断：-1005
+//无网络连接：-1009
+//请求超时：-1001
+//服务器内部错误：-1004
+//找不到服务器：-1003
+- (void)didFailLoadingWithTask:(TBVideoRequestTask *)task WithError:(NSInteger)errorCode
+{
+    NSString *str = nil;
+    switch (errorCode) {
+        case -1001:
+            str = @"请求超时";
+            break;
+        case -1003:
+        case -1004:
+            str = @"服务器错误";
+            break;
+        case -1005:
+            str = @"网络中断";
+            break;
+        case -1009:
+            str = @"无网络连接";
+            break;
+            
+        default:
+            str = [NSString stringWithFormat:@"%@", @"(_errorCode)"];
+            break;
+    }
+    NSLog(@"%@",str);
+    
 }
 
 #pragma mark - 外部接口
@@ -720,11 +826,11 @@ typedef NS_ENUM(NSUInteger, Direction) {
 - (void)dealloc {
     [self.xjPlayerItem removeObserver:self forKeyPath:@"status" context:nil];
     [self.xjPlayerItem removeObserver:self forKeyPath:@"loadedTimeRanges" context:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.xjPlayerItem];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
     [self.link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
     [self.xjPlayer removeTimeObserver:self.playbackTimeObserver];
-    [UIApplication sharedApplication].idleTimerDisabled=NO;
+    [UIApplication sharedApplication].idleTimerDisabled = NO;
 }
 
 @end

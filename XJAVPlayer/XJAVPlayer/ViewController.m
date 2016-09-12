@@ -35,7 +35,6 @@
 //    scroll.delegate = self;
 //    [scroll addSubview:myPlayer];
 //    [self.view addSubview:scroll];
-//    NSLog(@"%@",[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]);//查看缓存的路径(暂时没有实现缓冲)；
 }
 
 //- (void)viewDidLayoutSubviews{
@@ -44,7 +43,7 @@
 //}
 //
 //- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
-//    //如果添加了自动缩到右下角，在scrollView的代理里面还在上这句；
+//    //如果添加了自动缩到右下角，在scrollView的代理里面还在加上这句；
 //    if (scrollView.contentOffset.y - myPlayer.originalFrame.origin.y <= 0) {
 //        [myPlayer movieXJPlayeToOriginalPosition];
 //        [scrollView addSubview:myPlayer];

@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		0416FB381D7D595500C37EE6 /* UIDevice+XJDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 0416FB371D7D595500C37EE6 /* UIDevice+XJDevice.m */; };
+		046560C71D82A4CD00F7D70E /* TBloaderURLConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 046560C41D82A4CD00F7D70E /* TBloaderURLConnection.m */; };
+		046560C81D82A4CD00F7D70E /* TBVideoRequestTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 046560C61D82A4CD00F7D70E /* TBVideoRequestTask.m */; };
 		046EB2031D7E56A90038F990 /* XJGestureButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 046EB2021D7E56A90038F990 /* XJGestureButton.m */; };
 		047706B81D7965C900222907 /* icon_progress.png in Resources */ = {isa = PBXBuildFile; fileRef = 047706B71D7965C900222907 /* icon_progress.png */; };
 		048E4BCD1D7D389000AE8900 /* button_forward@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 048E4BCC1D7D389000AE8900 /* button_forward@2x.png */; };
@@ -40,6 +42,10 @@
 /* Begin PBXFileReference section */
 		0416FB361D7D595500C37EE6 /* UIDevice+XJDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIDevice+XJDevice.h"; sourceTree = "<group>"; };
 		0416FB371D7D595500C37EE6 /* UIDevice+XJDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIDevice+XJDevice.m"; sourceTree = "<group>"; };
+		046560C31D82A4CD00F7D70E /* TBloaderURLConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TBloaderURLConnection.h; sourceTree = "<group>"; };
+		046560C41D82A4CD00F7D70E /* TBloaderURLConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TBloaderURLConnection.m; sourceTree = "<group>"; };
+		046560C51D82A4CD00F7D70E /* TBVideoRequestTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TBVideoRequestTask.h; sourceTree = "<group>"; };
+		046560C61D82A4CD00F7D70E /* TBVideoRequestTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TBVideoRequestTask.m; sourceTree = "<group>"; };
 		046EB2011D7E56A90038F990 /* XJGestureButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XJGestureButton.h; sourceTree = "<group>"; };
 		046EB2021D7E56A90038F990 /* XJGestureButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XJGestureButton.m; sourceTree = "<group>"; };
 		047706B71D7965C900222907 /* icon_progress.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_progress.png; sourceTree = "<group>"; };
@@ -94,6 +100,17 @@
 				0416FB371D7D595500C37EE6 /* UIDevice+XJDevice.m */,
 			);
 			path = "强制旋转";
+			sourceTree = "<group>";
+		};
+		046560C21D82A4CD00F7D70E /* 视屏缓存 */ = {
+			isa = PBXGroup;
+			children = (
+				046560C31D82A4CD00F7D70E /* TBloaderURLConnection.h */,
+				046560C41D82A4CD00F7D70E /* TBloaderURLConnection.m */,
+				046560C51D82A4CD00F7D70E /* TBVideoRequestTask.h */,
+				046560C61D82A4CD00F7D70E /* TBVideoRequestTask.m */,
+			);
+			path = "视屏缓存";
 			sourceTree = "<group>";
 		};
 		046EB1F41D7E55FF0038F990 /* 手势事件 */ = {
@@ -162,6 +179,7 @@
 			children = (
 				04E192111D78262F00D95AB9 /* XJAVPlayer.h */,
 				04E192121D78262F00D95AB9 /* XJAVPlayer.m */,
+				046560C21D82A4CD00F7D70E /* 视屏缓存 */,
 				046EB1F41D7E55FF0038F990 /* 手势事件 */,
 				0416FB351D7D591200C37EE6 /* 强制旋转 */,
 				04E192131D78262F00D95AB9 /* 适配 */,
@@ -303,9 +321,11 @@
 			files = (
 				04E192191D78262F00D95AB9 /* SCYLayerAddition.m in Sources */,
 				04E191F01D7822DC00D95AB9 /* ViewController.m in Sources */,
+				046560C71D82A4CD00F7D70E /* TBloaderURLConnection.m in Sources */,
 				046EB2031D7E56A90038F990 /* XJGestureButton.m in Sources */,
 				0416FB381D7D595500C37EE6 /* UIDevice+XJDevice.m in Sources */,
 				04E192181D78262F00D95AB9 /* XJAVPlayer.m in Sources */,
+				046560C81D82A4CD00F7D70E /* TBVideoRequestTask.m in Sources */,
 				04E191ED1D7822DC00D95AB9 /* AppDelegate.m in Sources */,
 				04E1921A1D78262F00D95AB9 /* UIView+SCYCategory.m in Sources */,
 				04E191EA1D7822DC00D95AB9 /* main.m in Sources */,
