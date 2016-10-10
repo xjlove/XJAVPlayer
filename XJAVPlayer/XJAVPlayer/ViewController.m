@@ -18,12 +18,6 @@
 
 @implementation ViewController
 
-- (void)viewDidDisappear:(BOOL)animated{
-    [super viewDidDisappear:animated];
-    [myPlayer pause];
-    myPlayer.delegate = nil;
-}
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     

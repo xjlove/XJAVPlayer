@@ -139,8 +139,8 @@ typedef NS_ENUM(NSUInteger, Direction) {
 #pragma mark - 添加控件
 - (void)addToolView{
     
-    self.link = [CADisplayLink displayLinkWithTarget:self selector:@selector(upadte)];//和屏幕频率刷新相同的定时器
-    [self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+//    self.link = [CADisplayLink displayLinkWithTarget:self selector:@selector(upadte)];//和屏幕频率刷新相同的定时器
+//    [self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
     
     [self.xjGestureButton addSubview:self.bottomMenuView];
     UITapGestureRecognizer *nilTap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
