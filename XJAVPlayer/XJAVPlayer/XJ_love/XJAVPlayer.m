@@ -139,8 +139,8 @@ typedef NS_ENUM(NSUInteger, Direction) {
 #pragma mark - 添加控件
 - (void)addToolView{
     
-//    self.link = [CADisplayLink displayLinkWithTarget:self selector:@selector(upadte)];//和屏幕频率刷新相同的定时器
-//    [self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+    self.link = [CADisplayLink displayLinkWithTarget:self selector:@selector(upadte)];//和屏幕频率刷新相同的定时器
+    [self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
     
     [self.xjGestureButton addSubview:self.bottomMenuView];
     UITapGestureRecognizer *nilTap = [[UITapGestureRecognizer alloc] initWithTarget:nil action:nil];
@@ -241,9 +241,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
     CMTime changeTime = CMTimeMakeWithSeconds(slider.value,NSEC_PER_SEC);
     [self.xjPlayer seekToTime:changeTime completionHandler:^(BOOL finished) {
         [weakSelf.xjPlayer play];
-        if ([self.delegate respondsToSelector:@selector(xjPlayerPlayOrPause:)]) {
-            [self.delegate xjPlayerPlayOrPause:YES];
-        }
         [weakSelf.playOrPauseBtn setImage:[UIImage imageNamed:@"pause"] forState:UIControlStateNormal];
         isPlay = YES;
     }];
@@ -262,7 +259,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
             [self.loadingView stopAnimating];
             [self setUserInteractionEnabled:YES];//成功才能弹出底部菜单
             
-            CMTime duration = playerItem.duration;//获取视屏总长
+            CMTime duration = self.xjPlayerItem.duration;//获取视屏总长
             CGFloat totalSecond = playerItem.duration.value/playerItem.duration.timescale;//转换成秒
             
             self.playSlider.maximumValue = CMTimeGetSeconds(duration);//设置slider的最大值就是总时长
@@ -300,9 +297,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
     NSTimeInterval current = CMTimeGetSeconds(self.xjPlayer.currentTime);
     if (current!=self.lastTime) {
         //没有卡顿
-//        if (isPlay) {
-//            [self.xjPlayer play];
-//        }
+        if (isPlay) {
+            [self.xjPlayer play];
+        }
         [self.loadingView stopAnimating];
     }else{
         if (!isPlay) {
@@ -767,9 +764,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
         UIGraphicsBeginImageContextWithOptions((CGSize){1,1}, NO, 0.0f);
         UIImage *transparentImage = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
-        [_playSlider setThumbImage:[UIImage imageNamed:@"icon_progress"] forState:UIControlStateNormal];
-        [_playSlider setMinimumTrackImage:transparentImage forState:UIControlStateNormal];
-        [_playSlider setMaximumTrackImage:transparentImage forState:UIControlStateNormal];
+        [self.playSlider setThumbImage:[UIImage imageNamed:@"icon_progress"] forState:UIControlStateNormal];
+        [self.playSlider setMinimumTrackImage:transparentImage forState:UIControlStateNormal];
+        [self.playSlider setMaximumTrackImage:transparentImage forState:UIControlStateNormal];
         
         [_playSlider addTarget:self action:@selector(playSliderValueChanging:) forControlEvents:UIControlEventValueChanged];
         [_playSlider addTarget:self action:@selector(playSliderValueDidChanged:) forControlEvents:UIControlEventTouchUpInside];
