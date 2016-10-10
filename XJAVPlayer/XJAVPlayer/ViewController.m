@@ -29,12 +29,11 @@
     
     self.view.backgroundColor = [UIColor whiteColor];
     
-    myPlayer = [[XJAVPlayer alloc] initWithFrame:CGRectMake(0, 20, self.view.frame.size.width, 200)];
+    myPlayer = [[XJAVPlayer alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 200)];
     myPlayer.delegate = self;
 //
-//    myPlayer.xjPlayerUrl = @"http://static.tripbe.com/videofiles/20121214/9533522808.f4v.mp4";
-
-    myPlayer.xjPlayerUrl = [[NSBundle mainBundle] pathForResource:@"Swift.mp4" ofType:nil];
+    myPlayer.xjPlayerUrl = @"http://static.tripbe.com/videofiles/20121214/9533522808.f4v.mp4";
+//    myPlayer.xjPlayerUrl = [[NSBundle mainBundle] pathForResource:@"Swift.mp4" ofType:nil];
 
     [self.view addSubview:myPlayer];//(看自动缩小就把它注释了)
     

@@ -82,8 +82,6 @@ typedef NS_ENUM(NSUInteger, Direction) {
 }
 
 - (void)setPlayer:(AVPlayer *)p {
-    AVPlayerLayer *xjPlayerLayer = (AVPlayerLayer *)[self layer];
-    xjPlayerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     [(AVPlayerLayer *)[self layer] setPlayer:p];
 }
 
