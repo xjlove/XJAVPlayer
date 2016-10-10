@@ -241,6 +241,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
     CMTime changeTime = CMTimeMakeWithSeconds(slider.value,NSEC_PER_SEC);
     [self.xjPlayer seekToTime:changeTime completionHandler:^(BOOL finished) {
         [weakSelf.xjPlayer play];
+        if ([self.delegate respondsToSelector:@selector(xjPlayerPlayOrPause:)]) {
+            [self.delegate xjPlayerPlayOrPause:YES];
+        }
         [weakSelf.playOrPauseBtn setImage:[UIImage imageNamed:@"pause"] forState:UIControlStateNormal];
         isPlay = YES;
     }];
@@ -297,9 +300,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
     NSTimeInterval current = CMTimeGetSeconds(self.xjPlayer.currentTime);
     if (current!=self.lastTime) {
         //没有卡顿
-        if (isPlay) {
-            [self.xjPlayer play];
-        }
+//        if (isPlay) {
+//            [self.xjPlayer play];
+//        }
         [self.loadingView stopAnimating];
     }else{
         if (!isPlay) {
