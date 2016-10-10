@@ -259,7 +259,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
             [self.loadingView stopAnimating];
             [self setUserInteractionEnabled:YES];//成功才能弹出底部菜单
             
-            CMTime duration = self.xjPlayerItem.duration;//获取视屏总长
+            CMTime duration = playerItem.duration;//获取视屏总长
             CGFloat totalSecond = playerItem.duration.value/playerItem.duration.timescale;//转换成秒
             
             self.playSlider.maximumValue = CMTimeGetSeconds(duration);//设置slider的最大值就是总时长
@@ -764,9 +764,9 @@ typedef NS_ENUM(NSUInteger, Direction) {
         UIGraphicsBeginImageContextWithOptions((CGSize){1,1}, NO, 0.0f);
         UIImage *transparentImage = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
-        [self.playSlider setThumbImage:[UIImage imageNamed:@"icon_progress"] forState:UIControlStateNormal];
-        [self.playSlider setMinimumTrackImage:transparentImage forState:UIControlStateNormal];
-        [self.playSlider setMaximumTrackImage:transparentImage forState:UIControlStateNormal];
+        [_playSlider setThumbImage:[UIImage imageNamed:@"icon_progress"] forState:UIControlStateNormal];
+        [_playSlider setMinimumTrackImage:transparentImage forState:UIControlStateNormal];
+        [_playSlider setMaximumTrackImage:transparentImage forState:UIControlStateNormal];
         
         [_playSlider addTarget:self action:@selector(playSliderValueChanging:) forControlEvents:UIControlEventValueChanged];
         [_playSlider addTarget:self action:@selector(playSliderValueDidChanged:) forControlEvents:UIControlEventTouchUpInside];
