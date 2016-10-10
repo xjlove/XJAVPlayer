@@ -457,6 +457,12 @@ typedef NS_ENUM(NSUInteger, Direction) {
     NSString *tempPath = DownloadPath;
     NSString *str = [tempPath stringByAppendingPathComponent:[NSString stringWithFormat:@"xjPlayer/%@",self.savePath]];
     
+    if ([fileManager fileExistsAtPath:url]) {
+        self.filePath = [NSURL fileURLWithPath:url];
+        NSLog(@"filePath:%@",self.filePath);
+        return YES;
+    }
+    
     if ([fileManager fileExistsAtPath:str]) {
         self.filePath = [NSURL fileURLWithPath:str];
         NSLog(@"filePath:%@",str);
@@ -823,7 +829,7 @@ typedef NS_ENUM(NSUInteger, Direction) {
     self.loadingView.frame = CGRectMake(self.xjGestureButton.centerX, self.xjGestureButton.centerY-20, 20, 20);
 }
 
-- (void)dealloc {
+- (void)dealloc{
     [self.xjPlayerItem removeObserver:self forKeyPath:@"status" context:nil];
     [self.xjPlayerItem removeObserver:self forKeyPath:@"loadedTimeRanges" context:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self];

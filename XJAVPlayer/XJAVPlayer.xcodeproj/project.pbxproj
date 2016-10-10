@@ -27,6 +27,7 @@
 		04E1921F1D78272A00D95AB9 /* play@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E1921D1D78272A00D95AB9 /* play@2x.png */; };
 		04E192221D782A2100D95AB9 /* big@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E192201D782A2100D95AB9 /* big@2x.png */; };
 		04E192231D782A2100D95AB9 /* small@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 04E192211D782A2100D95AB9 /* small@2x.png */; };
+		04ECBE6F1DAB277D00592EDD /* Swift.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 04ECBE6E1DAB277D00592EDD /* Swift.mp4 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,7 @@
 		04E1921D1D78272A00D95AB9 /* play@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "play@2x.png"; sourceTree = "<group>"; };
 		04E192201D782A2100D95AB9 /* big@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "big@2x.png"; sourceTree = "<group>"; };
 		04E192211D782A2100D95AB9 /* small@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "small@2x.png"; sourceTree = "<group>"; };
+		04ECBE6E1DAB277D00592EDD /* Swift.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = Swift.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -151,6 +153,7 @@
 				04E191F11D7822DC00D95AB9 /* Main.storyboard */,
 				04E191F41D7822DC00D95AB9 /* Assets.xcassets */,
 				04E191F61D7822DC00D95AB9 /* LaunchScreen.storyboard */,
+				04ECBE6E1DAB277D00592EDD /* Swift.mp4 */,
 				04E191F91D7822DC00D95AB9 /* Info.plist */,
 				04E191E81D7822DC00D95AB9 /* Supporting Files */,
 			);
@@ -300,6 +303,7 @@
 				04E191F81D7822DC00D95AB9 /* LaunchScreen.storyboard in Resources */,
 				04E191F51D7822DC00D95AB9 /* Assets.xcassets in Resources */,
 				04E191F31D7822DC00D95AB9 /* Main.storyboard in Resources */,
+				04ECBE6F1DAB277D00592EDD /* Swift.mp4 in Resources */,
 				047706B81D7965C900222907 /* icon_progress.png in Resources */,
 				04E1921E1D78272A00D95AB9 /* pause@2x.png in Resources */,
 			);
