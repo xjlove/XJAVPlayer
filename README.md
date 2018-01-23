@@ -32,6 +32,8 @@
 6.时间显示
 
 使用:
+  ![image](https://github.com/xjlove/XJAVPlayer/blob/master/Untitled.gif)
+
 ![image](https://github.com/xjlove/XJAVPlayer/blob/master/屏幕快照%202016-09-05%20下午5.08.17.png)
 .
 .
@@ -59,4 +61,5 @@
   Use:
 
   ![image](https://github.com/xjlove/XJAVPlayer/blob/master/屏幕快照%202016-09-05%20下午5.08.17.png)
+
 
